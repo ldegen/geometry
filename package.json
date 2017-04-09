@@ -1,0 +1,28 @@
+{
+  "name": "@ldegen/geometry",
+  "version": "0.1.0",
+  "description": "geometry-related utilities",
+  "main": "index.js",
+  "scripts": {
+    "prepublish": "mkdir -p src && mkdir -p lib && coffee -o lib/ -c src/*",
+    "test": "mkdir -p src && mocha spec --recursive --require spec/helpers/chai.js --require coffee-script/register --compilers coffee:coffee-script/register",
+    "test-watch": "mkdir -p src && mocha --recursive -b -w spec --require spec/helpers/chai.js --require coffee-script/register --compilers coffee:coffee-script/register,litcoffee:coffee-script/register ",
+    "test-debug": "mkdir -p src && node-debug node_modules/mocha/bin/_mocha  --recursive spec --require spec/helpers/chai.js --require coffee-script/register --compilers coffee:coffee-script/register --no-timeouts --debug-brk"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ldegen/geometry.git"
+  },
+  "author": "Lukas Degener",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ldegen/geometry/issues"
+  },
+  "homepage": "https://github.com/ldegen/geometry#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
+    "coffee-script": "^1.12.4",
+    "mocha": "^3.2.0"
+  }
+}
