@@ -1,5 +1,5 @@
 {
-  "name": "@ldegen/geometry",
+  "name": "@l.degener/geometry",
   "version": "0.1.0",
   "description": "geometry-related utilities",
   "main": "index.js",
