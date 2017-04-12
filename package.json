@@ -2,7 +2,7 @@
   "name": "@l.degener/geometry",
   "version": "0.1.0",
   "description": "geometry-related utilities",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "prepublish": "mkdir -p src && mkdir -p lib && coffee -o lib/ -c src/*",
     "test": "mkdir -p src && mocha spec --recursive --require spec/helpers/chai.js --require coffee-script/register --compilers coffee:coffee-script/register",
@@ -20,9 +20,11 @@
   },
   "homepage": "https://github.com/ldegen/geometry#readme",
   "devDependencies": {
+    "bluebird": "^3.5.0",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
     "coffee-script": "^1.12.4",
+    "coffeelint": "^1.16.0",
     "mocha": "^3.2.0"
   }
 }
