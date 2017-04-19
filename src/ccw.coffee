@@ -12,6 +12,10 @@
 # when working with a computer screen, y-axis is pointing down most of the time
 # for historical reasons. To avoid confusion we flip the sign.
 #
+#
+#
+EPS = 1e-12
+
 module.exports = ([x0,y0],[x1,y1],[x2,y2])->
   dx1= x1-x0; dy1=y1-y0
   dx2= x2-x0; dy2=y2-y0
@@ -21,9 +25,9 @@ module.exports = ([x0,y0],[x1,y1],[x2,y2])->
   # This is usually not the case on a computer screen, so we flip the sign.
   ccw=dy1*dx2-dx1*dy2
 
+  
 
-
-  if Math.abs(ccw) <= (Number.EPSILON ? 2.220446049250313e-16)
+  if ccw*ccw < EPS
     # d1 and d2 are colinear, i.e. all three points
     # are on a line.
 
