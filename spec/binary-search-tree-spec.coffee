@@ -1,6 +1,8 @@
 describe "The Binary Search Tree", ->
   BinarySearchTree = require "../src/binary-search-tree"
-  t = (k,v,l,r)->
+  shortNode = (key)->(left=null,right=null)->[key,left,right]
+  [m,ä,á,é,r,t,o,n] = (shortNode c for c in "mäáérton")
+  _t = (k,v,l,r)->
     key:k
     value:v
     left:l
@@ -11,6 +13,9 @@ describe "The Binary Search Tree", ->
     trace = []
   cmp = (a,b)->
     switch
+      when a is 'á' and b is 'é' or a is 'é' and b is 'á'
+        trace.push "#{a}!#{b}"
+        return undefined
       when a<b
         trace.push "#{a}<#{b}"
         return -1
@@ -26,7 +31,7 @@ describe "The Binary Search Tree", ->
 
   it "dynamically builds a tree", ->
     tree = BinarySearchTree cmp
-    tree.insert n,n for n in "márton"
+    tree.insert c,c for c in "márton"
     expect(trace).to.eql [
       "á>m"
       "r>m", "r<á"
@@ -34,18 +39,14 @@ describe "The Binary Search Tree", ->
       "o>m", "o<á", "o<r"
       "n>m", "n<á", "n<r", "n<o"
     ]
-    expect(tree.dump()).to.eql(
-      t("m","m",
+    expect(tree.dumpKeys()).to.eql(
+      m(
         null,
-        t("á","á",
-          t("r","r",
-            t('o',"o",
-              t('n',"n", null, null),
-              null
-            ),
-            t('t', "t", null, null)
-          ),
-          null
+        á(
+          r(
+            o(n()),
+            t()
+          )
         )
       )
     )
@@ -53,7 +54,7 @@ describe "The Binary Search Tree", ->
     tree = undefined
     beforeEach ->
       tree = BinarySearchTree cmp
-      tree.insert n,i for n, i in "márton"
+      tree.insert c,i for c, i in "márton"
       trace = []
     it "returns the value for a key", ->
       v = tree.get 'r'
@@ -69,7 +70,7 @@ describe "The Binary Search Tree", ->
     tree = undefined
     beforeEach ->
       tree = BinarySearchTree cmp
-      tree.insert n,i for n, i in "márton"
+      tree.insert c,i for c, i in "márton"
       trace = []
     it "can traverse the tree inorder", ->
       node = tree.first()
@@ -91,24 +92,17 @@ describe "The Binary Search Tree", ->
     tree = undefined
     beforeEach ->
       tree = BinarySearchTree cmp, -> 0.1
-      tree.insert n,i for n, i in "márton"
+      tree.insert c,i for c, i in "márton"
       trace = []
 
     it "removes leafs without otherwise changing the structure", ->
       tree.remove "t"
 
-      expect(tree.dump()).to.eql(
-        t("m",0,
+      expect(tree.dumpKeys()).to.eql(
+        m(
           null,
-          t("á",1,
-            t("r",2,
-              t('o',4,
-                t('n',5, null, null),
-                null
-              ),
-              null
-            ),
-            null
+          á(
+            r(o(n()))
           )
         )
       )
@@ -116,49 +110,96 @@ describe "The Binary Search Tree", ->
     it "inlines nodes with only a right child", ->
       tree.remove 'm'
 
-      expect(tree.dump()).to.eql(
-        t("á",1,
-          t("r",2,
-            t('o',4,
-              t('n',5, null, null),
-              null
-            ),
-            t('t', 3, null, null)
-          ),
-          null
+      expect(tree.dumpKeys()).to.eql(
+        á(
+          r(
+            o(n()),
+            t()
+          )
         )
       )
 
     it "inlines nodes with only a left child", ->
       tree.remove 'á'
       
-      expect(tree.dump()).to.eql(
-        t("m",0,
+      expect(tree.dumpKeys()).to.eql(
+        m(
           null,
-          t("r",2,
-            t('o',4,
-              t('n',5, null, null),
-              null
-            ),
-            t('t', 3, null, null)
-          ),
-          null
+          r(
+            o(n()),
+            t()
+          )
         )
       )
 
     it "replaces nodes with both children with its inorader neighbour", ->
       tree.remove 'r'
 
-      expect(tree.dump()).to.eql(
-        t("m",0,
+      expect(tree.dumpKeys()).to.eql(
+        m(
           null,
-          t("á",1,
-            t("o",4,
-              t('n',5, null, null),
-              t('t', 3, null, null)
-            ),
-            null
+          á(
+            o(
+              n(),
+              t()
+            )
           )
         )
       )
 
+  describe "when inserting a key that conflicts with an existing key", ->
+    tree = undefined
+    beforeEach ->
+      tree = BinarySearchTree cmp, -> 0.1
+      tree.insert c,i for c, i in "márton"
+      trace = []
+    it "removes the existing node and reports the conflicting keys", ->
+      conflicts = []
+      tree.insert 'é',42, (a,b)->conflicts.push "#{a}!#{b}"
+      expect(trace).to.eql [
+        'é>m'
+        'é!á'
+      ]
+      expect(tree.dumpKeys()).to.eql(
+        m(null,r(o(n()),t()))
+      )
+      expect(conflicts).to.eql ["é!á"]
+
+  describe "when encountering conflicts during removal", ->
+
+    tree = undefined
+    beforeEach ->
+      tree = BinarySearchTree cmp, -> 0.1
+      
+      tree.insert c,i for c, i in "mäáérton"
+      trace = []
+      expect(tree.dumpKeys()).to.eql(
+        m(
+          null,
+          ä(
+            á(
+              r(
+                o(n()),
+                t()
+              )
+            ),
+            é()
+          )
+        )
+      )
+
+    it "removes and reports the conflicting keys", ->
+      conflicts = []
+      tree.remove 'ä', (a,b)->conflicts.push "#{a}!#{b}"
+      expect(conflicts).to.eql ["á!é"]
+      console.log(JSON.stringify(tree.dumpKeys(), null, "  "))
+      expect(tree.dumpKeys()).to.eql(
+        m(
+          null,
+          t(
+            r(
+              o(n())
+            )
+          )
+        )
+      )

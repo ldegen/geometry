@@ -17,20 +17,20 @@ _cmp = (a,b,axis,tryInverse=false)->
   almostA2 =(v)->vAlmostZero substA2 v
 
   if almostA1 b1
-    console.log "b1 almost a1", b1, a1
+    #console.log "b1 almost a1", b1, a1
     return ccw a2,a1,b2 #a2[axis]-b2[axis]
   if almostA1 b2
-    console.log "b2 almost a1", b2, a1
+    #console.log "b2 almost a1", b2, a1
     return 0
   if almostA2 b1
-    console.log "b1 almost a2", b1, a2
+    #console.log "b1 almost a2", b1, a2
     return 0
   if almostA2 b2
-    console.log "b2 almost a2", b2, a2
+    #console.log "b2 almost a2", b2, a2
     return -ccw a1,a2,b1
 
   if tryInverse
-    console.log "try inverse"
+    #console.log "try inverse"
     inv = _cmp b,a,axis
     if inv? then -inv
   else # first try returned 0
