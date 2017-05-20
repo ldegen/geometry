@@ -1,4 +1,4 @@
-xdescribe "The Bentley-Ottmann algorithm",->
+describe "The Bentley-Ottmann algorithm",->
 
   intersections = require "../src/bentley-ottmann"
 
@@ -28,7 +28,7 @@ xdescribe "The Bentley-Ottmann algorithm",->
     segments = [a,b,c,d,e]
 
     expect(intersections segments).to.eql [
-      { intersection: [-2.5, -2], segments: [a, b] }
+      { intersection: [5*5/17-4, 7*5/17-4], segments: [a, b] }
       { intersection: [-1.5, -2+1/6], segments: [b, d] }
       { intersection: [ 0, -1.5], segments: [a, c] }
     ]

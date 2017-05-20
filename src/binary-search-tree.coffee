@@ -13,21 +13,29 @@ class TreeNode
     @depth = if @up? then @up.depth + 1 else 0
   isEmpty: -> not @key?
   goto:(key)->
-    return this if not @key
+    return [this] if not @key
+    console.log "goto comparing", key,@key
     c = @cmp key, @key
     n = switch
-      when c<0 then (@left ?= new TreeNode @cmp,this, LEFT).goto key
-      when c>0 then (@right ?= new TreeNode @cmp, this, RIGHT).goto key
-      when c==0 then this # TODO: allow multiple nodes with the same key?
+      when c<0
+        console.log "left"
+        (@left ?= new TreeNode @cmp,this, LEFT).goto key
+      when c>0
+        console.log "right"
+        (@right ?= new TreeNode @cmp, this, RIGHT).goto key
+      when c==0
+        console.log "found!"
+        # TODO: allow multiple nodes with the same key?
+        [this]
       else
+        console.log "conflict!"
         # The two keys could not be compared.
         # In the context of our bentley-ottmann implementation
         # this means that the both nodes represent crossing line segements.
         # TODO: both segments need to be split at the intersection point.
         #   I do not want to do this here.
         #   We need some kind of callback mechanism to actually do this.
-        @conflictingKey=key
-        this
+        [this,key]
   min: ->
     if @left?.key? then @left.min() else this
   max: ->
@@ -46,6 +54,7 @@ class TreeNode
     if @left?.key? then @left.max() else @leftAnchestor()
   remove: (rnd, report)->
     return if not @key?
+    console.log ">>removing", @key
     switch
       # In all cases, the adjacence relation changes.
       # For our particular use case, we cannot assume that our
@@ -64,11 +73,13 @@ class TreeNode
         @key=null
         @value=null
       when not @left?
+        # FIXME: do we need an explicit check here?
         @key = @right.key
         @value = @right.value
         @left = @right.left
         @right = @right.right
       when not @right?
+        # FIXME: do we need an explicit check here?
         @key = @left.key
         @value = @left.value
         @right = @left.right
@@ -87,10 +98,10 @@ class TreeNode
           newNeighbour = @left
           check = @cmp newNeighbour.key, replacement.key
 
-        console.log "removing", @key
-        console.log "replacement", replacement.key
-        console.log "newNeighbour", newNeighbour.key
-        console.log "check", check
+        #console.log "removing", @key
+        #console.log "replacement", replacement.key
+        #console.log "newNeighbour", newNeighbour.key
+        console.log "check", replacement.key, newNeighbour.key
         if check < 0
           # replacement is consistent. Do it.
           @key = replacement.key
@@ -99,14 +110,17 @@ class TreeNode
         else
           # inconsistency found!
           # We remove *both* nodes, *and* this one
-          a = replacement.key
-          b = newNeighbour.key
+          console.log "inconsistency found"
+          a={}
+          b={}
+          {key:a.key,value:a.value} = replacement
+          {key:b.key,value:b.value} = newNeighbour
           @key = replacement.key
           @value = replacement.value
           replacement.remove rnd, report
           @remove rnd, report
           newNeighbour.remove rnd, report
-          report a, b
+          report a,b
 
 
   dumpKeys: -> if not @key? then null else [
@@ -130,22 +144,26 @@ module.exports = (cmp=defaultCmp,rnd=Math.random)->
 
   empty: -> root.isEmpty()
   insert: (key, value=key, reportConflict)->
-    node = root.goto key
-    if node.conflictingKey?
-      reportConflict node.conflictingKey, node.key
+    console.log "insert", key
+    [node,conflictingKey] = root.goto key
+    if conflictingKey?
+      throw new Error("not what I expected") unless key is conflictingKey
+      reportConflict {key,value}, {key:node.key, value:node.value}
       node.remove rnd
     else
+      console.log "create", key
       node.key=key
       node.value=value
   remove: (key, reportConflict)->
-    node = root.goto key
+    console.log "remove", key
+    [node] = root.goto key
     node.remove rnd, reportConflict
 
   first: ->root.min()
   last: ->root.max()
 
   get: (key)->
-    node = root.goto key
+    [node] = root.goto key
     node.value unless node.isEmpty()
   dump: -> root.dump()
   dumpKeys: ->root.dumpKeys()

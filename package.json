@@ -7,7 +7,7 @@
     "prepublish": "mkdir -p src && mkdir -p lib && coffee -o lib/ -c src/*",
     "test": "mkdir -p src && mocha spec --recursive --require spec/helpers/chai.js --require coffee-script/register --compilers coffee:coffee-script/register",
     "test-watch": "mkdir -p src && mocha --recursive -b -w spec --require spec/helpers/chai.js --require coffee-script/register --compilers coffee:coffee-script/register,litcoffee:coffee-script/register ",
-    "test-debug": "mkdir -p src && node-debug node_modules/mocha/bin/_mocha  --recursive spec --require spec/helpers/chai.js --require coffee-script/register --compilers coffee:coffee-script/register --no-timeouts --debug-brk"
+    "test-debug": "mkdir -p src && mocha debug --recursive -b spec --require spec/helpers/chai.js --require coffee-script/register --compilers coffee:coffee-script/register --no-timeouts"
   },
   "repository": {
     "type": "git",
@@ -26,5 +26,8 @@
     "coffee-script": "^1.12.4",
     "coffeelint": "^1.16.0",
     "mocha": "^3.2.0"
+  },
+  "dependencies": {
+    "fastpriorityqueue": "^0.2.4"
   }
 }

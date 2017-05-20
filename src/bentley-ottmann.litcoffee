@@ -1,3 +1,7 @@
+## Common helper routines
+
+    {vInterpolate,coefficients} = require "./common"
+
 ## Comparing coordinate pairs
 
   
@@ -36,6 +40,8 @@ segments cannot be compared.
 
     {cmpV} = require './scan-line-order'
 
+## Data Structures
+
 Intersecting pairs will be detected either when inserting or when
 rearanging the tree after removal of a segment.  As Sedgewick points
 out, some extra care has to be taken to account for the fact that our
@@ -51,22 +57,35 @@ Because I am lazy, this tree is not self-balancing.
 I think that could be added, but would also involve more explicit
 comparisons.
 
+Another thing that we need is a priority queue. We do not care much
+about its implementation details. We hide those behind a simplistic API.
+
+    FPQ = require 'fastpriorityqueue'
+    Queue = (cmp)->
+      impl = new FPQ (a,b)->cmp(a,b)<0
+
+      isEmpty: -> impl.isEmpty()
+      size: -> impl.size()
+      push: (v)-> impl.add v
+      pop: -> impl.poll()
+      peek: -> impl.peek()
 
 
 
-## Types of events
+
+## Scanline Events
 
 Events contain x and y coordinates, an event type
-and one or more segments. There are three types of 
-events:
+and the index of the associated segment in the input array. 
+So there are two types of events:
 
 - The start of a segment
     
-    startEvent = (s)->[leftEndPoint(s)..., 's', s]
+    startEvent = (s,i)->[leftEndPoint(s)..., 's', i]
 
 - The end of a segment
 
-    endEvent = (s)->[rightEndPoint(s)..., 'e', s]
+    endEvent = (s,i)->[rightEndPoint(s)..., 'e', i]
 
 ## Handling intersections
 
@@ -74,10 +93,51 @@ In most implementations of the Bentley-Ottmann-Algorithm,
 there is a third event type used for intersections.
 We take a different approach, also inspired by Sedgewick's book:
 
-Whenever we detect an intersection, we "split" both lines
-at the intersection point. Within the tree, both segments are replaced
-with their respective left "half". We add two end events and two start
-events to the queue, all four at the point of intersection.
+
+When the binary tree detects a pair of keys that cannot be compared,
+it removes any nodes with this keys and reports the edge pair.
+
+    deleted = []
+
+    handleIntersection = (segments,queue) -> (a,b)->
+
+We determine the point at which the two segments intersect
+
+      [λ,μ] = coefficients a.key, b.key
+      p = vInterpolate(a.key...)(λ)
+
+Next, we "split" both line segments at at the intersection point and generate
+four new segments.
+
+      newSegments = [
+        [a.key[0],p]
+        [p, a.key[1]]
+        [b.key[0],p]
+        [p, b.key[1]]
+      ]
+
+We generate start and end events for the new segments and
+add them to the event queue. 
+We also push the new segments into our input array,
+so we can refer to them later
+(TODO: not nice, solve this differently)
+
+      for s in newSegments
+        sx = segments.length
+        segments.push s
+        queue.push startEvent s, sx
+        queue.push endEvent s, sx
+
+
+
+We do want no further processing of the old segments.
+Since it is not feasable to remove random events from the queue, 
+we blacklist the old segments. Thus, when the scan line touches
+an event that refers to them, this event is silently skipped.
+      
+      deleted[a.value]=true if a.value?
+      deleted[b.value]=true if b.value?
+  
 
 With most other implementations, there is some book keeping going on
 that makes sure that intersections are not detected twice.
@@ -102,76 +162,56 @@ algorithm
 
 Initialize a priority queue of potential future events. 
 
-      queue = Queue (comparePoints)
+      queue = Queue comparePoints
+
+      intersectionFound = handleIntersection segments, queue
 
 Initially, the queue contains an event for each of the endpoints
 of the input segments.
     
-      for s in segments
-        queue.push startEvent s
-        queue.push endEvent s
+      for s,i in segments
+        queue.push startEvent s,i
+        queue.push endEvent s,i
 
-We use a binary search tree to track the 'active' line segments.
-A line segment is active if it touches or crosses the scanline.
-We want the active segments to be always sorted by the y-position
-at which they currently intersect the scanline. 
-Of course, these positions will change as the scanline moves.
-However, the ordering will remain stable (modulo insert/remove)
-*unless two lines are crossing*. 
+Create the BST to track the segments currently intersected by the scan line.
+We use the "generalized order relation" suggested by Sedgewick (see above).
 
-To achieve this, we always use the latest event related to a line
-segment as its key. 
-Initially, T is empty.
+      activeSegments = Tree cmpV
 
-      activeSegments = Tree (a,b) -> a[1]-b[1]
-
-Keep going for as long as there are events in the queue:
+Now, we are entering the main loop. The following steps are repeated
+as long as there are events in the queue.
     
       while not queue.isEmpty()
       
 Extract the left-most event from the queue and process it according
-to its type.
+to its type, skipping any events that belong to deleted segments
       
-        [evX,evY,evType,evSegments...] = event = queue.pop()
+        [evX,evY,evType,sx] = event = queue.pop()
+        
+        continue if deleted[sx]
+
+        s = segments[sx]
+        console.log "-----"
+        console.log "event", event
+        
 
         switch evType
 
 ### Case 1: Start point of a new line segment
 
-When the scanline encounters the left endpoint of a new segment
-insert it into to the active segments. 
+When the scanline encounters the left endpoint of one or more
+segments we insert those segments into our active set
 
           when 's'
-            newSegment = evSegments[0]
-            activeSegments.add event
-
-Look for the two active segments that are immediately above and below
-the newly inserted segment. 
-
-            above = activeSegments.itemBefore(event)?.slice(3) ? []
-            below = activeSegments.itemAfter(event)?.slice(3) ? []
-
-If they cross the new segment, create crossing-events to the queue
-accordingly.
-
-            for segment in above when intersect segment, newSegment
-              queue.push intersectionEvent segment, newSegment
-            for segment in below when intersect newSegment, segment
-              queue.push intersectionEvent newSegment, segment
-
-
+            activeSegments.insert s, sx, intersectionFound
 
 ### Case 2: End-point of an active line segment
 
-When the right end-point of a line segment is encountered
+When the right end-point of one or more line segments is encountered
+we remove those segments from our active set
       
           when 'e'
-            endingSegment = evSegments[0]
+            activeSegments.remove s, intersectionFound
 
-determine the active segments immediatly above and below before
-removing the ending segment
-
-            above = activeSegments.itemBefore(event)?.slice(3) ? []
-            below = activeSegments.itemAfter(event)?.slice(3) ? []
-
-            activeSegments.remove event
+And that's it. The actual "smartness" is in the implementation of our search
+tree and the "generalized order relation".

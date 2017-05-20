@@ -155,7 +155,7 @@ describe "The Binary Search Tree", ->
       trace = []
     it "removes the existing node and reports the conflicting keys", ->
       conflicts = []
-      tree.insert 'é',42, (a,b)->conflicts.push "#{a}!#{b}"
+      tree.insert 'é',42, (a,b)->conflicts.push "#{a.key}!#{b.key}"
       expect(trace).to.eql [
         'é>m'
         'é!á'
@@ -190,9 +190,8 @@ describe "The Binary Search Tree", ->
 
     it "removes and reports the conflicting keys", ->
       conflicts = []
-      tree.remove 'ä', (a,b)->conflicts.push "#{a}!#{b}"
+      tree.remove 'ä', (a,b)->conflicts.push "#{a.key}!#{b.key}"
       expect(conflicts).to.eql ["á!é"]
-      console.log(JSON.stringify(tree.dumpKeys(), null, "  "))
       expect(tree.dumpKeys()).to.eql(
         m(
           null,
