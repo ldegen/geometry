@@ -1,4 +1,4 @@
-describe "The Bentley-Ottmann algorithm",->
+xdescribe "The Bentley-Ottmann algorithm",->
 
   intersections = require "../src/bentley-ottmann"
 

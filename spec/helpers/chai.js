@@ -1,5 +1,6 @@
 var chai = require('chai');
 var asPromised = require('chai-as-promised');
+var chaiStats = require('chai-stats')
 var Writable = require("stream").Writable;
 var Readable = require("stream").Readable;
 var Promise = require("bluebird");
@@ -7,6 +8,7 @@ var Promise = require("bluebird");
 
 chai.config.includeStack = true;
 chai.use(asPromised);
+chai.use(chaiStats);
 
 global.expect = chai.expect;
 global.AssertionError = chai.AssertionError;

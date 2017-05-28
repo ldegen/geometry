@@ -14,21 +14,21 @@ class TreeNode
   isEmpty: -> not @key?
   goto:(key)->
     return [this] if not @key
-    console.log "goto comparing", key,@key
+    #console.log "goto comparing", key,@key
     c = @cmp key, @key
     n = switch
       when c<0
-        console.log "left"
+        #console.log "left"
         (@left ?= new TreeNode @cmp,this, LEFT).goto key
       when c>0
-        console.log "right"
+        #console.log "right"
         (@right ?= new TreeNode @cmp, this, RIGHT).goto key
       when c==0
-        console.log "found!"
+        #console.log "found!"
         # TODO: allow multiple nodes with the same key?
         [this]
       else
-        console.log "conflict!"
+        #console.log "conflict!"
         # The two keys could not be compared.
         # In the context of our bentley-ottmann implementation
         # this means that the both nodes represent crossing line segements.
@@ -54,7 +54,7 @@ class TreeNode
     if @left?.key? then @left.max() else @leftAnchestor()
   remove: (rnd, report)->
     return if not @key?
-    console.log ">>removing", @key
+    #console.log ">>removing", @key
     switch
       # In all cases, the adjacence relation changes.
       # For our particular use case, we cannot assume that our
@@ -101,7 +101,7 @@ class TreeNode
         #console.log "removing", @key
         #console.log "replacement", replacement.key
         #console.log "newNeighbour", newNeighbour.key
-        console.log "check", replacement.key, newNeighbour.key
+        #console.log "check", replacement.key, newNeighbour.key
         if check < 0
           # replacement is consistent. Do it.
           @key = replacement.key
@@ -110,7 +110,7 @@ class TreeNode
         else
           # inconsistency found!
           # We remove *both* nodes, *and* this one
-          console.log "inconsistency found"
+          #console.log "inconsistency found"
           a={}
           b={}
           {key:a.key,value:a.value} = replacement
@@ -144,18 +144,18 @@ module.exports = (cmp=defaultCmp,rnd=Math.random)->
 
   empty: -> root.isEmpty()
   insert: (key, value=key, reportConflict)->
-    console.log "insert", key
+    #console.log "insert", key
     [node,conflictingKey] = root.goto key
     if conflictingKey?
       throw new Error("not what I expected") unless key is conflictingKey
       reportConflict {key,value}, {key:node.key, value:node.value}
       node.remove rnd
     else
-      console.log "create", key
+      #console.log "create", key
       node.key=key
       node.value=value
   remove: (key, reportConflict)->
-    console.log "remove", key
+    #console.log "remove", key
     [node] = root.goto key
     node.remove rnd, reportConflict
 

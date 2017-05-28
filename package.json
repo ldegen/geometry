@@ -23,6 +23,7 @@
     "bluebird": "^3.5.0",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
+    "chai-stats": "^0.3.0",
     "coffee-script": "^1.12.4",
     "coffeelint": "^1.16.0",
     "mocha": "^3.2.0"
