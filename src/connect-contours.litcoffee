@@ -1,11 +1,13 @@
+    {coefficients, vInterpolate} = require("./common")
+    
 ## Connect Two Open Contour Lines
-
+    
 This function will take two lists of vertices and stitch them together
 in a …meaningful… façon. The general assumption here is that both lists
 are the vertices of open polygonal contour lines and that the end of the
 first line needs to be somehow connected to the start of the second one.
 
-    connect = (firstList, secondList)->
+    module.exports = (firstList, secondList)->
 
 We make this *very* simplistic for now. We pick the last segment of the
 first list and the first segment of the second list.

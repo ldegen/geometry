@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    html,
+    body,
+    svg {
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      top: 0px;
+      left: 0px;
+    }
+    
+    path {
+      fill: none;
+      stroke-width: 0.05;
+      stroke: black;
+    }
+    
+    path.skeleton {
+      stroke: red;
+    }
+    
+    path.trapezoid {
+      stroke: blue;
+      stroke-dasharray: 0.05 0.05;
+      stroke-width: 0.02;
+    }
+    
+    path.skin {
+      stroke-width: 0.01;
+      fill: lightgoldenrodyellow;
+    }
+  </style>
+</head>
+
+<body>
+  <svg viewbox="-5 -5 10 5">
+      <path class="skin" d="M -0.5 0 L -0.4117647058823529 -0.35294117647058826 L -1.25 -1.75 L -1.5 -1.5 L -3 -4 L -1.2608695652173914 -2.9565217391304346 L -1 -4 L -0.5294117647058824 -2.1176470588235294 L 0.8571428571428564 -1.285714285714286 L 0.5882352941176471 -1.3529411764705883 L 1 -3 L 1.5294117647058822 -0.8823529411764706 L 0.3529411764705881 -0.588235294117647 L 0.5 0 Z" />
+      <path class="trapezoid" d="M -0.5 0 L -0.25 -1 L 0.25 -1 L 0.5 0 Z" />
+      <path class="trapezoid" d="M -0.5 -0.5 L -1.25 -1.75 L -0.75 -2.25 L 0.5 -1.5 Z" />
+      <path class="trapezoid" d="M -1.5 -1.5 L -2.25 -2.75 L -1.75 -3.25 L -0.5 -2.5 Z" />
+      <path class="trapezoid" d="M -1.5 -2 L -1.25 -3 L -0.75 -3 L -0.5 -2 Z" />
+      <path class="trapezoid" d="M 0 -1.5 L 1 -1.25 L 1 -0.75 L 0 -0.5 Z" />
+      <path class="trapezoid" d="M 0.5 -1 L 0.75 -2 L 1.25 -2 L 1.5 -1 Z" />
+      <path class="skeleton" d="
+          M 0 0 L 0 -1 L -1 -2 L -2 -3 M -1 -2 L -1 -3 M 0 -1 L 1 -1 L 1 -2 
+        "/>
+    </svg>
+</body>
+
+</html>

@@ -55,33 +55,16 @@ details on how to do that.
 Here, we just use that module to sort the children on the fly.
 
     children   = (bone) ->
-      bone[4]?.slice()?.sort(compare(bone)) ? []
+      bones = bone[4] ? []
+      if bones.length > 1 then bones.slice().sort(compare(bone))
+      else bones
 
-If our skeleton consisted of a single bone then its skin would be a
-trapezoid.  The bone itself is perpendicular to the two parallel sides
-of the trapezoid.  Each point is constructed by picking an end-point of
-the bone (start or end) and then a side (left or right).  Then the point
-we are looking for is on line perpendicular to the bone through the
-choosen end. Its distance is the width associated with that end point.
-We assume the direction of the perpendicular to point left with regard
-to the bone. To construct the point on the right, use a negative
-"distance". We created a helper function for this in another module:
 
-    perpendicular = require('./perpendicular')
+The skin for the skeleton is constructed from simple trapezoid shapes.
+Each bone with its two radii defines a trapezoid. We created another helper function
+for this:
 
-With this little helper, we can easily define our trapezoid:
-
-    trapezoid = (bone) ->
-      sp = startPoint(bone)
-      ep = endPoint(bone)
-      sw = startWidth(bone)
-      ew = endWidth(bone)
-      [
-        perpendicular(sp,ep,sw)  # start left
-        perpendicular(ep,sp,-ew) # end left
-        perpendicular(ep,sp,ew)  # end right
-        perpendicular(sp,ep,-sw) # start right
-      ]
+    trapezoid = require("./trapezoid")
 
 To create the skin of a (sub-)tree of bones we start with this trapezoid, but
 combine it with the skins of the bone's childrens' subtrees.
@@ -97,3 +80,5 @@ function. Check this module for details:
     connect = require('./connect-contours')
 
 That's it. We are done.
+
+    module.exports = skin
