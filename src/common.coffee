@@ -1,9 +1,84 @@
+{sin,cos,atan2, PI} = Math
 
+# simple matrix product, but for the special in which both
+# operands are affine linear transformations
+#
+#   a c e
+#   b d f
+#   0 0 1
+#
+# which are stored as [a,b,c,d,e,f]
+aTfProd = ([a0,a1,a2,a3,a4,a5],[b0,b1,b2,b3,b4,b5])->[
+  a0*b0 + a2*b1,      a1*b0 + a3*b1
+  a0*b2 + a2*b3,      a1*b2 + a3*b3
+  a0*b4 + a2*b5 + a4, a1*b4 + a3*b5 + a5
+]
 
+# apply an affine linear transformation (see above) to an vector [x1,x2]
+#
+# i.e. returns an array [y1, y2] such that
+#
+#   / y1 \    / a c e \  / x1 \
+#   | y2 | =  | b d f |  | x2 |
+#   \ 1  /    \ 0 0 1 /  \ 1  /
+#
 
-
+applyTf =([x1,x2], [a,b,c,d,e,f])->[
+    a*x1 + c*x2 + e
+    b*x1 + d*x2 + f
+  ]
 
 C =
+  
+  deg: (a)-> 180 * a / PI
+
+  rad: (a)-> PI * a / 180
+
+  rotate: (a)-> [
+    cos(a),   sin(a)
+    -sin(a),   cos(a)
+    0, 0
+  ]
+
+  scale: (sx,sy)->[
+    sx, 0
+    0, sy
+    0, 0
+  ]
+    
+  translate: (tx0,ty0)->
+    [tx,ty] = if not ty0? then tx0 else [tx0,ty0]
+  
+    [
+      1, 0
+      0, 1
+      tx, ty
+    ]
+
+  vNegate: ([x,y])->[-x,-y]
+  mirror: (s1,s2)->
+    a = @direction(@vSubst(s1)(s2))
+    t = @composeTf @translate(s1), @rotate(a)
+    tInv = @composeTf @rotate(-a), @translate(@vNegate(s1))
+    @composeTf t, @scale(-1,1), tInv
+
+  composeTf: (matrices...)-> matrices.reduce aTfProd
+
+  applyTf: ([a,b,c,d,e,f])->([x,y])->[
+    a*x + c*y + e
+    b*x + d*y + f
+  ]
+
+  applyTfs: (tfs...)->
+    @applyTf @composeTf tfs...
+    
+
+  # assuming negativ y pointin g up, this
+  # returns the angle in radians to the y axis.
+  # Positive angles are clock-wise.
+  direction: ([x,y])->atan2(x,-y)
+    
+
   coefficients: (args...)->
     #console.log "args", args...
     [[s1,s2],[t1,t2]]=args
