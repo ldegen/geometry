@@ -8,36 +8,15 @@ not contain self-intersections or zero-length edges.
 
     module.exports = ([s1,s2])->(ring)->
 
-
 Most of our lower-level utility functions are already defined
 
       {coefficients, vInterpolate, vProject, vSubst, vAlmostZero, almostZero
        coefficient, ringEdges, ringArea} = require './common'
       ccw = require './ccw'
-
       group = require './group'
       flatMap = (arr, transform) -> [].concat((arr.map(transform))...)
-
-We define a special intersection test. Any segment intersects our cutting line
-if its end points are not on the same side of the line.
-In particular we assume a segment to be "intersecting" if it is actually a subset of the cutting line
-i.e. both end points reside *on* the cutting line.
-We will, however, need to do some special treatment of these "intersections" later on.
-
-      intersects = (a,b)-> ccw(s1,s2,a,true) * ccw(s1,s2,b,true) <= 0
-
-Each intersection point x lies on the cutting line, so we can describe them
-using a coefficient lambda such that x = s1 + lambda (s2-s1).
-We will later use this to sort the pseudo-vertices resulting from intersections along
-the cutting line.
-
       mu = coefficient([s1,s2])
-      lambda = (a,b)->
-        l=coefficients([s1,s2],[a,b])?[0]
-        l
       interpolate = vInterpolate(s1,s2)
-
-
 
 We calculate the oriented area of the ring.
 A positive sign means vertices are labled in counter-clock-wise order
@@ -47,14 +26,13 @@ We need this info later.
       area = ringArea ring
       ringIsCCW = (area > 0)
 
-
 The algorithem comprises two phases:
 
 - in the first phase, the input ring is
   cut down into fragments such that each fragment completly lies on either the
   left or the right side of the cutting line
 
-- int the second phase, the fragments are connected to rings.
+- in the second phase, the fragments are connected to rings.
 
 ## Phase I: cutting the ring into fragments
 
@@ -75,7 +53,6 @@ We have to handle four (five, actually) different cases:
 - the remaining two cases are edges that are entirely on one side.
 
         switch
-
           when sideA * sideB < 0
             [lambda] = coefficients [s1,s2],[a,b]
             x = interpolate lambda
@@ -90,7 +67,6 @@ We have to handle four (five, actually) different cases:
               startAt: lambda
               side: Math.sign sideB
             ]
-
           when sideA is 0 and sideB is 0 # edge is subset of cutting line
             lambdaA = mu a
             lambdaB = mu b
@@ -101,7 +77,6 @@ We have to handle four (five, actually) different cases:
               endAt: lambdaB
               side: if ringIsCCW and lambdaA < lambdaB then -1 else 1
             ]
-
           when sideA is 0
             [
               start: a
@@ -122,7 +97,6 @@ We have to handle four (five, actually) different cases:
               end: b
               side: Math.sign sideA #or sideB, doesn't matter.
             ]
-
 
 Next we collect consecutive edges that are on the same side into groups. We then transform the
 edge groups into fragments.
@@ -163,6 +137,8 @@ So let's build a lookup table where we can lookup fragments by their `startAt` p
       fragmentsStartingAt = {}
       fragmentsStartingAt[fragment.startAt] = fragment for fragment in fragments when fragment.startAt?
 
+Next, we create a data structure that will lookup the "peer" of each intersection lambda.
+
       peerLambdas = {}
       for i in [0...Math.floor(lambdas.length/2)]
         a = lambdas[2*i]
@@ -170,9 +146,10 @@ So let's build a lookup table where we can lookup fragments by their `startAt` p
         peerLambdas[a] = b
         peerLambdas[b] = a
 
+We combin both lookups to create a function that can look at the `endAt`-Property of one
+fragment and find another fragment to continue the ring with.
+
       findContinuation = (fragment)-> fragmentsStartingAt[peerLambdas[fragment.endAt]]
-
-
 
 Now everything is prepared for connecting the fragments to rings. We take one fragment from our list and try to connect
 other fragments to using our lookup table and the rule defined above. All connected fragments are marked "done"; we do not
@@ -205,5 +182,4 @@ start the next ring with the next unmarked fragment. We cary on until all fragme
             throw new Error("Srsly, wtf?!")
 
       [leftRings, rightRings]
-
 
