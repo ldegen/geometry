@@ -57,10 +57,10 @@ C =
 
   vNegate: ([x,y])->[-x,-y]
   mirror: (s1,s2)->
-    a = @direction(@vSubst(s1)(s2))
-    t = @composeTf @translate(s1), @rotate(a)
-    tInv = @composeTf @rotate(-a), @translate(@vNegate(s1))
-    @composeTf t, @scale(-1,1), tInv
+    a = C.direction(C.vSubst(s1)(s2))
+    t = C.composeTf C.translate(s1), C.rotate(a)
+    tInv = C.composeTf C.rotate(-a), C.translate(C.vNegate(s1))
+    C.composeTf t, C.scale(-1,1), tInv
 
   composeTf: (matrices...)-> matrices.reduce aTfProd
 
@@ -70,7 +70,7 @@ C =
   ]
 
   applyTfs: (tfs...)->
-    @applyTf @composeTf tfs...
+    C.applyTf C.composeTf tfs...
     
 
   # assuming negativ y pointin g up, this
@@ -78,6 +78,12 @@ C =
   # Positive angles are clock-wise.
   direction: ([x,y])->atan2(x,-y)
     
+  coefficient: ([s1,s2])->
+    [dx,dy] = d = C.vSubst(s1)(s2)
+    i = if dx*dx > dy*dy then 0 else 1
+    (x)->
+      v = C.vSubst(s1)(x)
+      v[i] / d[i]
 
   coefficients: (args...)->
     #console.log "args", args...
@@ -103,6 +109,20 @@ C =
     [d1/d, d2/d]
 
 
+  vProject: (from, to)->
+    # transform coordinates so from ends up in the origin
+    t = C.vSubst from
+    tInv =C.vAdd  from
+
+    # the vector we project upon
+    b = t to
+
+    (point) ->
+      a = t point
+      tInv C.vScale(C.vSP(a)(b) / C.vSP(b)(b))(b)
+    
+
+
   vInterpolate: (a,b) -> (λ) ->
     d = C.vSubst(a)(b)
     λd = C.vScale(λ)(d)
@@ -120,5 +140,12 @@ C =
   EPS: 1e-12
   vAlmostZero: (v)->C.vSP(v)(v) < C.EPS
   almostZero: (s)->(s*s) < C.EPS
+  ringEdges: (points) ->
+    points.map (v,i,vs)->
+      if i is 0 then [vs[vs.length-1],v] else [vs[i-1],v]
+  ringArea: (points)-> # google for "shoelace formular"
+    0.5 * C.ringEdges(points)
+      .map ([[x1,y1],[x2,y2]])->(x2-x1)*(y2+y1)
+      .reduce (a,b)->a+b
 
 module.exports=C

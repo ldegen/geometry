@@ -12,11 +12,17 @@
 # when working with a computer screen, y-axis is pointing down most of the time
 # for historical reasons. To avoid confusion we flip the sign.
 #
+# - We use this check a lot to determine on which side of some (infinit) line a 
+#   point lies. In these cases, we assume the line is through p0 and p1.
+#   We want to skip the special treatment of colinear cases here and just return
+#   zero if p2 is on the line. This behaviour can be enabled by
+#   passing a truthy value as fourth parameter.
+#
 #
 #
 EPS = 1e-12
 
-module.exports = ([x0,y0],[x1,y1],[x2,y2])->
+module.exports = ([x0,y0],[x1,y1],[x2,y2],inf=false)->
   dx1= x1-x0; dy1=y1-y0
   dx2= x2-x0; dy2=y2-y0
   dsq1 = dx1*dx1+dy1*dy1
@@ -34,6 +40,7 @@ module.exports = ([x0,y0],[x1,y1],[x2,y2])->
     # We handle these border cases just as Sedgewick does, but we flip
     # the sign.
     switch
+      when inf then 0
       # p2 --- p0 --- p1
       when dx1*dx2 < 0 or dy1 * dy2 < 0 then 1
 

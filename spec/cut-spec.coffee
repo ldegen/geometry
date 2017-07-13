@@ -1,7 +1,9 @@
+util = require "util"
+util.inspect.defaultOptions.depth=5
 describe "The `cut`-function", ->
   
 
-  cut = require "../src/cut"
+  cut = require "../src/cut.litcoffee"
   
   letterS = [
     [0,  0]
@@ -33,11 +35,36 @@ describe "The `cut`-function", ->
     expect(r.length).to.eql 2
     [left,right] = r
     expect(left).to.almost.eql [
-      [A,B,l,a]
-      [E,F,h,i,C,D,d,e]
+      [l,a,A,B]
+      [D,d,e,E,F,h,i,C]
     ]
     expect(right).to.almost.eql [
-      [D,C,j,k,B,A,b,c]
-      [F,E,f,g]
+      [A,b,c,D,C,j,k,B]
+      [E,f,g,F]
     ]
-    
+  it "handles cases where there are no intersections", ->
+    r = cut([[-1,0],[-1,-1]]) letterS
+    [rest..., last] = letterS
+    expect(r).to.eql [
+      []
+      [[last, rest...]]
+    ]
+
+  it "gracefully handles edges that are contained in the cutting edge", ->
+    r = cut([[0,0],[0,-1]]) letterS
+    [rest..., last] = letterS
+    expect(r).to.eql [
+      []
+      [[last, rest...]]
+    ]
+    intersections = ([1, -ii] for ii in [0 .. 5])
+    [A,B,C,D,E,F] = intersections
+    [left,right] = cut([[1,0],[1,-1]]) letterS
+    expect(left).to.almost.eql [
+      [l,a,A,B]
+      [D,E,F,h,i,C]
+    ]
+    expect(right).to.almost.eql [
+      [A,b,c,D,C,j,k,B]
+      [E,f,g,F]
+    ]
