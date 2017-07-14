@@ -148,4 +148,31 @@ C =
       .map ([[x1,y1],[x2,y2]])->(x2-x1)*(y2+y1)
       .reduce (a,b)->a+b
 
+  closeRing: (ring)->
+    [first,...,last]= ring
+    if last is first then ring else [ring...,first]
+
+  openRing: (ring)->
+    [first,...,last] = ring
+    if last is first then ring.slice(0,-1) else ring
+
+  makeRingCcw: (ring)->
+    if C.ringArea(ring) > 0 then ring else ring.slice().reverse()
+
+  makeRingCw: (ring)->
+    if C.ringArea(ring) < 0 then ring else ring.slice().reverse()
+
+  geoJson2rings: ({geomery:{coordinates}})-> coordinates.map C.openRing
+
+  rings2geoJson: (rings)->
+    rings = rings0
+      .map (ring,i)-> if i is 0 then C.makeCcw(ring) else C.makeCw(ring)
+      .map C.closeRing
+             
+    type: "Feature"
+    geometry:
+      type: "Polygon"
+      coordinates: rings
+
+
 module.exports=C

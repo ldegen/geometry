@@ -29,6 +29,7 @@
     "mocha": "^3.2.0"
   },
   "dependencies": {
-    "fastpriorityqueue": "^0.2.4"
+    "fastpriorityqueue": "^0.2.4",
+    "simplepolygon": "^1.1.7"
   }
 }
