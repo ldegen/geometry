@@ -1,6 +1,6 @@
 {
   "name": "@l.degener/geometry",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "geometry-related utilities",
   "main": "lib/index.js",
   "scripts": {
