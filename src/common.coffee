@@ -164,7 +164,7 @@ C =
 
   geoJson2rings: ({geomery:{coordinates}})-> coordinates.map C.openRing
 
-  rings2geoJson: (rings)->
+  rings2geoJson: (rings0)->
     rings = rings0
       .map (ring,i)-> if i is 0 then C.makeCcw(ring) else C.makeCw(ring)
       .map C.closeRing
