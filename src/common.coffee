@@ -166,7 +166,7 @@ C =
 
   rings2geoJson: (rings0)->
     rings = rings0
-      .map (ring,i)-> if i is 0 then C.makeCcw(ring) else C.makeCw(ring)
+      .map (ring,i)-> if i is 0 then C.makeRingCcw(ring) else C.makeRingCw(ring)
       .map C.closeRing
              
     type: "Feature"
