@@ -162,7 +162,7 @@ C =
   makeRingCw: (ring)->
     if C.ringArea(ring) < 0 then ring else ring.slice().reverse()
 
-  geoJson2rings: ({geomery:{coordinates}})-> coordinates.map C.openRing
+  geoJson2rings: ({geometry:{coordinates}})-> coordinates.map C.openRing
 
   rings2geoJson: (rings0)->
     rings = rings0
