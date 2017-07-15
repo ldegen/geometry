@@ -1,11 +1,12 @@
-module.exports =
-  ccw: require "./ccw"
-  fit: require "./fit"
-  Transform: require "./transform"
-  trees: require "./trees"
-  skin:  require "./skin"
-  intersect:  require "./intersect"
-  perpendicular: require "./perpendicular"
-  trapezoid: require "./trapezoid"
-  skeleton: require "./skeleton"
+C = require "./common"
+C.ccw = require "./ccw"
+C.fit = require "./fit"
+C.Transform = require "./transform"
+C.trees = require "./trees"
+C.skin =  require "./skin"
+C.intersect =  require "./intersect"
+C.perpendicular = require "./perpendicular"
+C.trapezoid = require "./trapezoid"
+C.skeleton = require "./skeleton"
   
+module.exports = C
