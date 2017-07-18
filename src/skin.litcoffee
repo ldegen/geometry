@@ -82,3 +82,5 @@ function. Check this module for details:
 That's it. We are done.
 
     module.exports = skin
+    module.exports.connect = connect
+    module.exports.compare = compare

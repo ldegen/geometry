@@ -63,7 +63,7 @@ describe "The skin-Function", ->
     #  [0.375,-0.625]
     #  [0.5, 0]
     #]
-  it "takes a skeleton and puts on a skin", ->
+  xit "takes a skeleton and puts on a skin", ->
     # our skeleton looks something like this:
     #
     #   C D
