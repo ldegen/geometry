@@ -8,5 +8,6 @@ C.intersect =  require "./intersect"
 C.perpendicular = require "./perpendicular"
 C.trapezoid = require "./trapezoid"
 C.skeleton = require "./skeleton"
+C.snap = require "./snap"
   
 module.exports = C
