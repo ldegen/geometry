@@ -1,8 +1,16 @@
 kdbush = require "kdbush"
 
 min = (arr)->arr.reduce (a,b)->Math.min(a,b)
+dedupe = (edges)->
+  lookup = {}
+  edges.filter (edge)->
+    if not lookup[edge]?
+      lookup[edge]=true
+      true
+    else
+      false
 
-module.exports = ({vertices,edges, radius=0.0001}) ->
+module.exports = ({vertices,edges, radius=0.0001, removeDuplicateEdges=false}) ->
   index = kdbush vertices
   lookup = (k)->
     [x,y]=vertices[k]
@@ -15,5 +23,5 @@ module.exports = ({vertices,edges, radius=0.0001}) ->
     .map ([a,b])->Math.max(a,b)
     .reduce (a,b)->Math.max(a,b)
   vertices: vertices.slice 0, maxIndex + 1
-  edges:newEdges
+  edges:if removeDuplicateEdges then dedupe newEdges else newEdges
     
