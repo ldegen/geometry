@@ -9,5 +9,6 @@ C.perpendicular = require "./perpendicular"
 C.trapezoid = require "./trapezoid"
 C.skeleton = require "./skeleton"
 C.snap = require "./snap"
+C.cut = require "./cut"
   
 module.exports = C
