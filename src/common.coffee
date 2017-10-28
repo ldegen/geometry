@@ -139,10 +139,15 @@ C =
   det: ([a1,a2],[b1,b2])->a1*b2-a2*b1
   EPS: 1e-12
   vAlmostZero: (v)->C.vSP(v)(v) < C.EPS
+  vAlmostSame: (a)->
+    f = C.vSubst a
+    (b)->C.vAlmostZero f b
   almostZero: (s)->(s*s) < C.EPS
   ringEdges: (points) ->
     points.map (v,i,vs)->
       if i is 0 then [vs[vs.length-1],v] else [vs[i-1],v]
+  # note: positive area means counter-clock-wise orientation
+  # (assuming positive y-axis points down)
   ringArea: (points)-> # google for "shoelace formular"
     0.5 * C.ringEdges(points)
       .map ([[x1,y1],[x2,y2]])->(x2-x1)*(y2+y1)
@@ -150,11 +155,11 @@ C =
 
   closeRing: (ring)->
     [first,...,last]= ring
-    if last is first then ring else [ring...,first]
+    if C.vAlmostSame(last)(first) then ring else [ring...,first]
 
   openRing: (ring)->
     [first,...,last] = ring
-    if last is first then ring.slice(0,-1) else ring
+    if C.vAlmostSame(last)(first) then ring.slice(0,-1) else ring
 
   makeRingCcw: (ring)->
     if C.ringArea(ring) > 0 then ring else ring.slice().reverse()

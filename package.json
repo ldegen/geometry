@@ -31,6 +31,7 @@
   "dependencies": {
     "fastpriorityqueue": "^0.2.4",
     "kdbush": "^1.0.1",
+    "point-in-polygon": "^1.0.1",
     "simplepolygon": "^1.1.7"
   }
 }
