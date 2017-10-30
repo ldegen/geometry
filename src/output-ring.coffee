@@ -14,7 +14,9 @@ module.exports = (arcs, rings, coordinates, isJoint)->
     {ringIndex, positionInRing} = arc
     ring = rings[ringIndex].set(positionInRing)
     jointPositions[ring()] = vIds.length
-    while ring.position() is positionInRing or not isJoint(ring())
+    first = true
+    while first or not isJoint(ring())
+      first = false
       vIds.push ring()
       ring = ring.rotate(1)
   self = Ring vIds

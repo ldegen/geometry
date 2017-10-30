@@ -4,6 +4,7 @@
     snap = require "./snap"
     Ring = require "./ring"
     OutputRing = require "./output-ring"
+    {closeRing} = require "./common"
 
 ## Input and output
 
@@ -21,7 +22,7 @@ but we guarantee that in our output the first ring will be the outline.
 
 
 
-    module.exports = (rings0)->
+    module.exports = (rings0, options={})->
 
 ## Building a "planar" graph
 
@@ -37,10 +38,10 @@ on the fly.
 
       #console.log "vertices:"
       #for coords, vId in vertices
-        #console.log vId, coords
+      #  console.log vId, coords
       #console.log "input rings:"
       #for vIds,ringId in rings1
-        #console.log ringId,vIds
+      #  console.log ringId,vIds
 
 ## Relationship between concepts: rings, paths, edges
 
@@ -202,8 +203,13 @@ The general structure of the simplification process works like this:
               #console.log "stack empty"
               break
             else
+              #console.log "looking for an arc to continue on"
               arc = pickNextArc ringIndex, positionInRing
-              #console.log "continue on ring #{arc.ringIndex} at vertex #{startJoint arc}"
+              #if arc?
+              #  console.log "continue on ring #{arc.ringIndex} at vertex #{startJoint arc}"
+              #else
+              #  console.log "no continuation found"
+          #console.log "looking for an other unused arc"
           arc = pickUnusedArc()
         outputRings
 
@@ -433,5 +439,59 @@ check, we absolutly *must* skip the second check.
       for r,i in outputRings
         r.parent = parent r,i
 
-      outputRings
+
+## TODO: redundant arcs
+
+I wrote modules for detecting and resolving redundant edges.
+See modules `redundance` and `conditioner`.
+The conditioner produces a table of rings and edges that need to be ignored
+within these rings. Note that a redundant edge is per definition
+an arc (of length 1). We need to make sure that these arcs are never traversed
+when generating the output rings.
+The conditioner also tells us which rings need to be flipped in order to preserve the overall
+connectivity in the graph. This needs to be done on the *input* rings.
+
+## Create Feature Collection
+
+Finally, we want to output a GeoJSON `FeatureCollection` with features of type
+`Polygon`. For this, determine the "root" of each output ring by traversing the `parent`
+property.
+
+      for outputRing,i in outputRings
+        r = outputRing
+        outputRing.root = i
+        while r.parent?
+          outputRing.root = r.parent
+          r = outputRings[r.parent]
+
+
+Next we group the rings by their respective root ring id. Note that the rings in each 
+group are still ordered by |area| (descending). So we can leave the loop early
+once the area falls under a configured minimum
+
+      groups = {}
+      for outputRing, i in outputRings
+        if options.minArea? and Math.abs(outputRing.area()) < options.minArea
+          break
+        #console.log i, outputRing.parent
+        if options.removeRedundantRings and outputRing.parent?
+          #console.log "check"
+          if outputRing.area() * outputRings[outputRing.parent].area() > 0
+            break
+        group = groups[outputRing.root] ?= []
+        group.push outputRing
+
+
+Finally, we convert to GeoJSON, and we are done.
+
+
+      type: "FeatureCollection"
+      features: (for _,group of groups
+        type: "Feature"
+        geometry:
+          type: "Polygon"
+          coordinates: group.map (outputRing)->
+            closeRing outputRing.coords()
+      )
+      
 

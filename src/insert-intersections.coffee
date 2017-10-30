@@ -1,25 +1,39 @@
 
 gpsi = require('geojson-polygon-self-intersections')
 
-performInserts = (ring0, inserts)->
+performInserts = (ring0, inserts=[])->
   ring = []
   readPos = 0
-  sortedInserts = ({pos,v} for pos,v of inserts).sort ({pos:a},{pos:b})->a-b
-  for {pos,v} in sortedInserts
-    ring.push ring0[readPos...pos]..., v
-    readPos = pos
+  cmp =(a,b)->
+    d = a.pos - b.pos
+    return d if d isnt 0
+    a.frac - b.frac
+
+  sortedInserts = inserts.sort cmp
+  prev = null
+  for {pos,v,frac},i in sortedInserts
+    unless prev? and pos is prev.pos and Math.abs(frac-prev.frac)<0.000001
+      prev = {pos,v,frac}
+      ring.push ring0[readPos...pos]..., v
+      readPos = pos
   ring.push ring0[readPos...]...
   ring
     
 module.exports = (rings)->
     inserts=[]
-    addInsert = (ring,pos,v)->
-      ringInserts = inserts[ring]?={}
-      ringInserts[pos+1]=v
+    addInsert = (ring,pos,frac,v)->
+      ringInserts = inserts[ring]?=[]
+      ringInserts.push 
+        pos: pos+1
+        v:v
+        frac:frac
 
     processIntersection = (isect, ring0, edge0, start0, end0, frac0, ring1, edge1, start1, end1, frac1, unique)->
-      addInsert ring0, edge0, isect
-      addInsert ring1, edge1, isect
+      #console.log "isect", isect, "unique", unique, "ring0", ring0, "ring1",ring1
+      #console.log "ring0",ring0,"edge0",edge0, "frac0", frac0
+      #console.log "ring1",ring1,"edge1",edge1, "frac1", frac1
+      addInsert ring0, edge0, frac0, isect
+      addInsert ring1, edge1, frac1, isect
     feature =
       type: feature
       geometry:
@@ -27,6 +41,7 @@ module.exports = (rings)->
         coordinates: rings
     gpsi feature, processIntersection, true
 
+    #console.log "inserts", inserts
     rings.map (ring,i)->
       performInserts(ring, inserts[i])
     

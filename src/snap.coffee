@@ -53,6 +53,9 @@ module.exports = ({vertices:vertices0,edges:edges0, radius=0.0001, removeDuplica
   # array positions as vertex ids.
 
   compactEdges = (edge.map((origId)->vIdMap[origId]) for edge in edges)
+
+
+
   vertices: compactVertices
   edges:if removeDuplicateEdges then dedupe compactEdges else compactEdges
     
