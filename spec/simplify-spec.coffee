@@ -74,3 +74,23 @@ describe "Polygon Simplifier", ->
             [[-1,-2],[-0,-1],[1,-2],[2,-1],[1,0],[2,1],[1,2],[-0,1],[-1,2],[-2,1],[-1,0],[-2,-1],[-1,-2]]
           ]
       ]
+  
+  it "can be configured to ignore redundant edges", ->
+    input = [
+      [[0,0],[1,0],[1,2],[0,2],[0,0]]
+      [[1,1],[2,1],[2,2],[1,2],[1,1]]
+      [[1,0],[1,2],[3,2],[3,0],[1,0]]
+    ]
+
+    output = simplify input, ignoreRedundantEdges: true
+
+    expect(output).to.eql
+      type: "FeatureCollection"
+      features:[
+        type: "Feature"
+        geometry:
+          type: "Polygon"
+          coordinates:[
+            [[0,0],[0,2],[1,2],[1,1],[2,1],[2,2],[3,2],[3,0],[1,0],[0,0]]
+          ]
+      ]

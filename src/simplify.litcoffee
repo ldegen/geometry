@@ -1,6 +1,8 @@
 
     insertIntersections = require "./insert-intersections"
     ccw = require "./ccw"
+    redundance = require "./redundance"
+    conditioner = require "./conditioner"
     snap = require "./snap"
     Ring = require "./ring"
     OutputRing = require "./output-ring"
@@ -36,9 +38,20 @@ on the fly.
       planarRings = insertIntersections rings0
       {vertices, edges:rings1} = snap edges:planarRings
 
+
       #console.log "vertices:"
       #for coords, vId in vertices
       #  console.log vId, coords
+
+      redundanceInfo = undefined
+      if options.ignoreRedundantEdges
+        redundanceInfo = conditioner redundance rings1
+        #console.log "redundance", redundanceInfo
+        for ringId,{flip} of redundanceInfo when flip
+          #console.log "flipping ring #{ringId}"
+          rings1[ringId].reverse()
+
+
       #console.log "input rings:"
       #for vIds,ringId in rings1
       #  console.log ringId,vIds
@@ -128,6 +141,15 @@ forward search for the next vertex in the ring that is a joint.
       endJoint = (arc)->
           startJoint(endOfArc(arc))
 
+      edgeKey = (a,b)->
+        key = if a<b then [a,b] else [b,a]
+
+      arcRedundant = (arc)->
+        if options.ignoreRedundantEdges
+          ring = goto(arc)
+          key = edgeKey( ring(),ring(1))
+          redundanceInfo[arc.ringIndex].skip[key]
+
 
 
 ## Why are arcs interesting?
@@ -170,8 +192,7 @@ criterion which may come in handy later. (Think: containment etc.)
         #console.log "arcs:",arcs
         while arcsCursor < arcs.length
           arc = arcs[arcsCursor++]
-          return arc if not arc.processed
-nc
+          return arc if not arc.processed and not arcRedundant arc
 
 
 
@@ -205,10 +226,10 @@ The general structure of the simplification process works like this:
             else
               #console.log "looking for an arc to continue on"
               arc = pickNextArc ringIndex, positionInRing
-              #if arc?
-              #  console.log "continue on ring #{arc.ringIndex} at vertex #{startJoint arc}"
-              #else
-              #  console.log "no continuation found"
+              if arc?
+                #console.log "continue on ring #{arc.ringIndex} at vertex #{startJoint arc}"
+              else
+                #console.log "no continuation found"
           #console.log "looking for an other unused arc"
           arc = pickUnusedArc()
         outputRings
@@ -269,7 +290,8 @@ track wether it has been used (processed) before.
 
       for vId, entry of lookup
         edgeTheta = theta vId
-        adjacentEdges = flatmap entry.occurrances, (occurrance)->
+        occurrances = entry.occurrances
+        adjacentEdges = flatmap occurrances, (occurrance)->
           {ringIndex, positionInRing} = occurrance
           ring = rings[ringIndex]
           prev = ring.set(positionInRing - 1)
@@ -280,13 +302,21 @@ track wether it has been used (processed) before.
             ringIndex: ringIndex
             positionInRing: prev.position()
             theta: edgeTheta prev()
+            peer: prev()
             used: false
           ,
             direction: "outbound"
-            occurrance: occurrance
+            ringIndex: ringIndex
+            positionInRing: positionInRing
+            occurrance: occurrance # FIXME: redundant?
             theta: edgeTheta next()
+            peer: next()
             used: false
           ]
+
+        .filter ({peer,ringIndex})->
+          key = edgeKey(peer,vId)
+          not options.ignoreRedundantEdges or not redundanceInfo[ringIndex].skip[key]
 
         .sort ({theta:a},{theta:b})->a-b
 
@@ -311,6 +341,11 @@ and mark it as `used`.
         pos = rings[ringIndex]
           .set positionInRing - 1
           .position()
+
+        #console.log "vId", vId
+        #console.log "adjacent Edges", adjacentEdges.data
+        #console.log "ringIndex", ringIndex
+        #console.log "position", pos
         start = adjacentEdges
           .search (edge)->
             ( edge.ringIndex is ringIndex and
@@ -342,13 +377,15 @@ our terminal condition.
           cursor = start.rotate(dir)
           counter = 1
           while not cursor().used
+            candidate = cursor()
+            #console.log "candidate", candidate
             #console.log "looking at", goto(cursor().occurrance)(1), cursor().direction
-            counter = counter + (if cursor().direction == "inbound" then 1 else -1)
+            counter = counter + (if candidate.direction == "inbound" then 1 else -1)
             if counter is 0 # and cursor().direction == "outbound"
               # do not forget to mark the edge!
               #console.log "match!"
-              cursor().used = true
-              return cursor().occurrance
+              candidate.used = true
+              return candidate.occurrance
             cursor = cursor.rotate(dir)
 
 Why does this work? Let's say `a` is the inbound arc we are comming from. `B`
