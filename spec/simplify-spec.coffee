@@ -23,6 +23,27 @@ describe "Polygon Simplifier", ->
           coordinates:[[[0,0],[-1,1],[-1,-1],[0,0]]]
       ]
 
+  it "can be configured to return a single MultiPolygon instead of a FeatureCollection", ->
+
+    input = [
+      [[0,-2],[2,-2],[2,2],[0,2],[0,-2]]
+      [[-1,-1],[1,1],[1,-1],[-1,1],[-1,-1]]
+    ]
+    output = simplify input, outputFormat: "MultiPolygon"
+    expect(output).to.eql 
+      type: "Feature"
+      geometry:
+        type: "MultiPolygon"
+        coordinates:[
+          [
+            [[0,-2],[2,-2],[2,2],[0,2],[0,0],[0,-2]]
+            [[0,0],[1,1],[1,-1],[0,0]]
+          ]
+          [
+            [[0,0],[-1,1],[-1,-1],[0,0]]
+          ]
+        ]
+
   it "can be configured to remove rings that are too small", ->
     # magnitude of areas should be 1, 4, 16 
     input = [

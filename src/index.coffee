@@ -10,5 +10,6 @@ C.trapezoid = require "./trapezoid"
 C.skeleton = require "./skeleton"
 C.snap = require "./snap"
 C.cut = require "./cut"
-  
+C.simplify = require "./simplify"
+C.visualize = require "./visualize"
 module.exports = C

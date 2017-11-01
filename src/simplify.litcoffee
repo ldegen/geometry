@@ -7,6 +7,8 @@
     Ring = require "./ring"
     OutputRing = require "./output-ring"
     {closeRing} = require "./common"
+    visualize = require "./visualize"
+    {writeFileSync} = require "fs"
 
 ## Input and output
 
@@ -54,7 +56,7 @@ on the fly.
 
       #console.log "input rings:"
       #for vIds,ringId in rings1
-      #  console.log ringId,vIds
+        #console.log ringId,vIds
 
 ## Relationship between concepts: rings, paths, edges
 
@@ -66,6 +68,7 @@ and wrap the array in a helper structure that allows for more
 
 
       rings = rings1.map ([vIds...,lastVid])->Ring vIds
+      #writeFileSync "/tmp/debug.svg", visualize {vertices,rings,redundanceInfo}
 
       #console.log "input rings after preprocessing"
       #for ring,ringId in rings
@@ -205,7 +208,7 @@ The general structure of the simplification process works like this:
           #console.log "start on ring #{arc.ringIndex} at position #{arc.positionInRing} vertex #{startJoint arc}"
           outputArcs = []
           visitedVertices = []
-          
+
           endVertex = null
           while true
             arc.processed=true
@@ -226,12 +229,14 @@ The general structure of the simplification process works like this:
             else
               #console.log "looking for an arc to continue on"
               arc = pickNextArc ringIndex, positionInRing
-              if arc?
-                #console.log "continue on ring #{arc.ringIndex} at vertex #{startJoint arc}"
-              else
-                #console.log "no continuation found"
+              #if arc?
+              #  console.log "continue on ring #{arc.ringIndex} at vertex #{startJoint arc}"
+              #else
+              #  console.log "no continuation found"
           #console.log "looking for an other unused arc"
           arc = pickUnusedArc()
+
+
         outputRings
 
 
@@ -303,7 +308,6 @@ track wether it has been used (processed) before.
             positionInRing: prev.position()
             theta: edgeTheta prev()
             peer: prev()
-            used: false
           ,
             direction: "outbound"
             ringIndex: ringIndex
@@ -311,7 +315,6 @@ track wether it has been used (processed) before.
             occurrance: occurrance # FIXME: redundant?
             theta: edgeTheta next()
             peer: next()
-            used: false
           ]
 
         .filter ({peer,ringIndex})->
@@ -328,7 +331,7 @@ starting at some incoming edge.
         entry.adjacentEdges = Ring adjacentEdges
 
 
-Now, if we arrive at a joint `vId` we can do the following to pick a 
+Now, if we arrive at a joint `vId` we can do the following to pick a
 "good" next arc:
 
       pickNextArc = (ringIndex, positionInRing)->
@@ -336,7 +339,6 @@ Now, if we arrive at a joint `vId` we can do the following to pick a
         {adjacentEdges} = lookup[vId]
 
 Within the adjacent edges of `vId`, find the inbound edge we arrived from
-and mark it as `used`.
 
         pos = rings[ringIndex]
           .set positionInRing - 1
@@ -352,40 +354,47 @@ and mark it as `used`.
               edge.direction is "inbound" and
               edge.positionInRing is pos
             )
-        start().used = true
+        #console.log "arriving at vertex #{vId} via #{start().peer} on ring #{ringIndex}"
 
-        #console.log "arriving at vertex #{vId} via ring #{ringIndex}"
-
-Next, we look for matching outbound edge, i.e. one that 
+Next, we look for matching outbound edge, i.e. one that
 
 - does not cross any already connected edge pair
 - leaves an equal number of innound and
-  outbound edges on each side. 
+  outbound edges on each side.
 
 This can be done iterating the edges first in clockwise, then
 in counter-clockwise order, starting from the edge we arrived from.
 On both directions, we stop when we hit an edge that has already been used.
 We use a counter to keep track of the edges we come accress. We increment it
-for each inbound edge and decrement it for each outbound edge. We start with 
+for each inbound edge and decrement it for each outbound edge. We start with
 a value of 1 since we arrived on an inbound edge.
 Now, as soon as this counter is exactly zero, we know that on each side there
 must be a matching number of inbound and outbound edges, so this will be
-our terminal condition. 
+our terminal condition.
 
         for dir in [1,-1] # look in both directions
           #console.log "looking in direction", dir
           cursor = start.rotate(dir)
           counter = 1
-          while not cursor().used
+          while start.position() isnt cursor.position()
             candidate = cursor()
-            #console.log "candidate", candidate
-            #console.log "looking at", goto(cursor().occurrance)(1), cursor().direction
-            counter = counter + (if candidate.direction == "inbound" then 1 else -1)
-            if counter is 0 # and cursor().direction == "outbound"
-              # do not forget to mark the edge!
-              #console.log "match!"
-              candidate.used = true
-              return candidate.occurrance
+            #if candidate is already connected, skip over to the connected
+            #edge
+            if candidate.connected?
+              cursor.set candidate.connected
+
+            else
+              # FIXME: this is a bit tricky. Edges may be redundant. We do not
+              # want to count them more than once.
+              #console.log "candidate", candidate
+              #console.log "looking at", goto(cursor().occurrance)(1), cursor().direction
+              counter = counter + (if candidate.direction == "inbound" then 1 else -1)
+              if counter is 0 # and cursor().direction == "outbound"
+                # do not forget to record the matches
+                #console.log "match!"
+                candidate.connected = start.position()
+                start().connected = cursor.position()
+                return candidate.occurrance
             cursor = cursor.rotate(dir)
 
 Why does this work? Let's say `a` is the inbound arc we are comming from. `B`
@@ -412,7 +421,7 @@ There is one issue left, that we need to solve. The output should include
 
 For each ring, we find a vertex of which we *know* that it is convex.
 Since we know it has to be convex, we can determine the orientation of
-the ring.  
+the ring.
 We can do this by calculating the (oriented) area of each ring.
 There may be smarter ways to do this, but in our application we need the area
 anyway, so we do accept the overhead.
@@ -434,7 +443,10 @@ touch, so if we detected a shared vertex but no containment in the first
 check, we absolutly *must* skip the second check.
 
       # sort by area in descending order
+      # Remember the original position (for debugging only)
+      r.i=i for r,i in outputRings
       outputRings.sort (a,b)->Math.abs(b.area()) - Math.abs(a.area())
+      r.j=j for r,j in outputRings
 
       #console.log "outputRings", outputRings.map (r)->r.coords()
 
@@ -442,8 +454,8 @@ check, we absolutly *must* skip the second check.
         #console.log "smallerRing",i
 
         return if i is 0
-        touching = false
         for j in [i-1 .. 0] when j >= 0
+          touching = false
           #console.log "largerRing", j
           largerRing =outputRings[j]
 
@@ -463,7 +475,7 @@ check, we absolutly *must* skip the second check.
               c= ccw(vertices[vId],vertices[peerInLarger],vertices[peerInSmaller])
               #console.log "ccw", c
 
-              if 0 > c
+              if 0 >= c
                 #console.log "yep."
                 return j
               #else
@@ -471,8 +483,14 @@ check, we absolutly *must* skip the second check.
 
           # otherwise, use a more expensive check
           # IMPORTANT: only use this check, for rings that are *NOT* touching
-          return j if not touching and largerRing.contains smallerRing.coords()[0]
-      
+          if not touching
+            #console.log "expensive check: is #{i} is contained in #{j}?"
+            if largerRing.contains smallerRing.coords()[0]
+              #console.log "yep."
+              return j
+            #else
+              #console.log "nope"
+
       for r,i in outputRings
         r.parent = parent r,i
 
@@ -502,33 +520,54 @@ property.
           r = outputRings[r.parent]
 
 
-Next we group the rings by their respective root ring id. Note that the rings in each 
+Next we group the rings by their respective root ring id. Note that the rings in each
 group are still ordered by |area| (descending). So we can leave the loop early
 once the area falls under a configured minimum
 
       groups = {}
+      visibleRings = []
       for outputRing, i in outputRings
         if options.minArea? and Math.abs(outputRing.area()) < options.minArea
+          #console.log "small ring", i
           break
         #console.log i, outputRing.parent
         if options.removeRedundantRings and outputRing.parent?
           #console.log "check"
-          if outputRing.area() * outputRings[outputRing.parent].area() > 0
-            break
+          parentRing = outputRings[outputRing.parent]
+          if parentRing.redundant or outputRing.area() * parentRing.area() > 0
+            outputRing.redundant = true
+            #console.log "redundant ring", i
+            continue
         group = groups[outputRing.root] ?= []
         group.push outputRing
+        visibleRings.push outputRing
 
 
 Finally, we convert to GeoJSON, and we are done.
 
 
-      type: "FeatureCollection"
-      features: (for _,group of groups
-        type: "Feature"
-        geometry:
-          type: "Polygon"
-          coordinates: group.map (outputRing)->
-            closeRing outputRing.coords()
-      )
-      
+      #writeFileSync "/tmp/debug-out.svg", visualize {vertices,rings:visibleRings}
+
+      switch (options.outputFormat ? "FeatureCollection")
+        when "FeatureCollection"
+          type: "FeatureCollection"
+          features: (for _,group of groups
+            type: "Feature"
+            geometry:
+              type: "Polygon"
+              coordinates: group.map (outputRing)->
+                closeRing outputRing.coords()
+          )
+        when "MultiPolygon"
+          type: "Feature"
+          geometry:
+            type: "MultiPolygon"
+            coordinates: (for _, group of groups
+              group.map (outputRing)->closeRing outputRing.coords()
+            )
+        else
+          for _, group of groups
+            group.map (outputRing)->closeRing outputRing.coords()
+
+
 

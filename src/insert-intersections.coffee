@@ -25,7 +25,9 @@ performInserts = (ring0, inserts=[])->
 module.exports = (rings)->
     inserts=[]
     addInsert = (ring,pos,frac,v)->
-      unless isBoundaryCase frac
+      if isBoundaryCase frac
+        #console.log "not inserting",v, ring, frac
+      else
         ringInserts = inserts[ring]?=[]
         ringInserts.push 
           pos: pos+1
@@ -43,7 +45,7 @@ module.exports = (rings)->
       geometry:
         type: "Polygon"
         coordinates: rings
-    gpsi feature, processIntersection, useSpatialIndex:true, reportVertexOnEdge:true
+    gpsi feature, processIntersection, useSpatialIndex:true, reportVertexOnEdge:true, epsilon: EPSILON
 
     #console.log "inserts", inserts
     rings.map (ring,i)->
