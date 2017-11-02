@@ -68,7 +68,8 @@ and wrap the array in a helper structure that allows for more
 
 
       rings = rings1.map ([vIds...,lastVid])->Ring vIds
-      #writeFileSync "/tmp/debug.svg", visualize {vertices,rings,redundanceInfo}
+      if options.debug
+        writeFileSync "/tmp/debug.svg", visualize {vertices,rings,redundanceInfo}
 
       #console.log "input rings after preprocessing"
       #for ring,ringId in rings
@@ -293,6 +294,19 @@ For the outbound, we reference the occurrance as it *is* the arc
 that starts with that edge. For the inbound edge we need to separately
 track wether it has been used (processed) before.
 
+      compareEdges = (a,b)->
+        if a.peer isnt b.peer
+          a.theta - b.theta
+        else if a.direction is "inbound" and b.direction is "outbound"
+          -1
+        else if b.direction is "inbound" and a.direction is "outbound"
+           1
+        else if a.direction is "inbound"
+          a.ringIndex - b.ringIndex
+        else
+          b.ringIndex - a.ringIndex
+          
+
       for vId, entry of lookup
         edgeTheta = theta vId
         occurrances = entry.occurrances
@@ -321,7 +335,7 @@ track wether it has been used (processed) before.
           key = edgeKey(peer,vId)
           not options.ignoreRedundantEdges or not redundanceInfo[ringIndex].skip[key]
 
-        .sort ({theta:a},{theta:b})->a-b
+        .sort compareEdges
 
 We wrap the adjacent edges in a Ring data structure. The word has
 nothing to do with our rings, think of it more like a ring buffer. We
@@ -383,7 +397,7 @@ our terminal condition.
             if candidate.connected?
               cursor.set candidate.connected
 
-            else
+            else #if candidate.peer isnt start().peer
               # FIXME: this is a bit tricky. Edges may be redundant. We do not
               # want to count them more than once.
               #console.log "candidate", candidate
@@ -396,6 +410,9 @@ our terminal condition.
                 start().connected = cursor.position()
                 return candidate.occurrance
             cursor = cursor.rotate(dir)
+        console.log "no continuation found. this is bad :-("
+        console.log "arriving at vertex #{vId} via #{start().peer} on ring #{ringIndex}"
+        console.log "adjacent Edges", adjacentEdges.data
 
 Why does this work? Let's say `a` is the inbound arc we are comming from. `B`
 are the arcs on the left (clockwise) up to but not including the next arc that
@@ -430,12 +447,13 @@ anyway, so we do accept the overhead.
 
 If the orientation of the rings is known, we can compare touching rings
 by looking at the joint at which they touch. We can see if one ring lies
-inside of the other or not. Let's say both of the rings is oriented
-clock-wise. It contains the smaller one if and only if the edge following the
-joint in the smaller ring is right of the coressponding edge in the larger ring.
-If both rings are oriented ccw, its left instead.
-If the orientation differs, pick the previous edge in the smaller ring instead of the
-following. (It's probably best to normalize this in the OutputRing module)
+inside of the other or not. This works as follows:
+Each edge of the larger ring splits the plane into inside and outside.
+If the larger ring contains the smaller ring, than for each edge of the larger ring
+each vertex of the smaller ring must lie on the inside of that edge.
+But here, in our special case, we do not have to check all edge - vertex pairs.
+Since we know that rings cannot intersect, we only need to check the two adjacent
+edges in the larger ring and one of adjacent vertices in the smaller ring.
 
 For rings that do not share a vertex (do not touch), we use a more expansive
 standard point-in-polygon check. Note that this *will not work correctly* for rings that
@@ -459,23 +477,22 @@ check, we absolutly *must* skip the second check.
           #console.log "largerRing", j
           largerRing =outputRings[j]
 
-          # Check if both rings share a joint.
-          # In this case the larger ring contains
-          # the smaller.
-          #
           for vId, posInLarger of largerRing.jointPositions
-            peerInLarger = largerRing(if largerRing.area() > 0 then posInLarger - 1 else posInLarger + 1)
+            prevLarger = largerRing(posInLarger - 1)
+            nextLarger = largerRing(posInLarger + 1)
             posInSmaller = smallerRing.jointPositions[vId]
             if posInSmaller?
-              peerInSmaller = smallerRing(if smallerRing.area() > 0 then posInSmaller - 1 else posInSmaller + 1)
-              touching = true
               #console.log "rings #{i} and #{j} both contain #{vId} #{vertices[vId]}"
-              #console.log "peerInLarger", peerInLarger
-              #console.log "peerInSmaller", peerInSmaller
-              c= ccw(vertices[vId],vertices[peerInLarger],vertices[peerInSmaller])
-              #console.log "ccw", c
+              touching = true
+              nextSmaller = smallerRing(posInSmaller + 1)
+              # ccw > 0 means "inside" if area > 0
+              # ccw < 0 means "inside" if area < 0
+              # thus: ccw * area > = means "inside"
+              ccw1 = ccw vertices[prevLarger], vertices[vId], vertices[nextSmaller]
+              ccw2 = ccw vertices[vId], vertices[nextLarger], vertices[nextSmaller]
+              area = largerRing.area()
 
-              if 0 >= c
+              if(ccw1*area > 0 and ccw2 * area > 0)
                 #console.log "yep."
                 return j
               #else
@@ -546,7 +563,8 @@ once the area falls under a configured minimum
 Finally, we convert to GeoJSON, and we are done.
 
 
-      #writeFileSync "/tmp/debug-out.svg", visualize {vertices,rings:visibleRings}
+      if options.debug
+        writeFileSync "/tmp/debug-out.svg", visualize {vertices,rings:visibleRings}
 
       switch (options.outputFormat ? "FeatureCollection")
         when "FeatureCollection"

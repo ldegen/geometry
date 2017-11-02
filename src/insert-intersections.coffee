@@ -1,6 +1,6 @@
 
 gpsi = require('geojson-polygon-self-intersections')
-EPSILON = 0.000001
+EPSILON = 0.0000001
 isBoundaryCase = (frac)->
   e2 = EPSILON * EPSILON
   e2 >= (frac-1)*(frac-1) or e2 >= frac*frac
