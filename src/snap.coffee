@@ -2,13 +2,18 @@ kdbush = require "kdbush"
 min = (arr)->arr.reduce (a,b)->Math.min(a,b)
 dedupe = (edges)->
   lookup = {}
-  edges.filter (edge)->
+  newEdges = []
+  for edge, i in edges
     throw new Error "Not implemented yet: removing duplicate edges from edge strips" if edge.length isnt 2
-    if not lookup[edge]?
-      lookup[edge]=true
-      true
+    entry = lookup[edge]
+    if entry?
+      entry.push i
     else
-      false
+      lookup[edge] = [i]
+      newEdges.push edge
+
+  edges: newEdges
+  originalEdgeIds: newEdges.map (edge)->lookup[edge]
 
 module.exports = ({vertices:vertices0,edges:edges0, radius=0.0001, removeDuplicateEdges=false}) ->
   if vertices0?
@@ -55,7 +60,15 @@ module.exports = ({vertices:vertices0,edges:edges0, radius=0.0001, removeDuplica
   compactEdges = (edge.map((origId)->vIdMap[origId]) for edge in edges)
 
 
+  if removeDuplicateEdges
+    {edges:newEdges, originalEdgeIds} = dedupe compactEdges
 
-  vertices: compactVertices
-  edges:if removeDuplicateEdges then dedupe compactEdges else compactEdges
+    vertices: compactVertices
+    edges: newEdges
+    originalEdgeIds: originalEdgeIds
+
+  else
+
+    vertices: compactVertices
+    edges: compactEdges
     

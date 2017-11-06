@@ -60,6 +60,20 @@ describe "The `snap`-Function", ->
       [0,3]
     ]
 
+  describe "when removing edges", ->
+    it "provides the original edge ids (useful for labeling, etc)", ->
+      {originalEdgeIds} = snap vertices:vertices0, edges:edges0, radius: 0.1, removeDuplicateEdges: true
+      expect(originalEdgeIds).to.eql [
+        [0]
+        [1]
+        [2]
+        [3]
+        [4]
+        [5]
+        [6,7]
+      ]
+
+
   it "also works with edge strips as input", ->
     {edges,vertices} = snap vertices:vertices0, edges:strips0, radius:0.1
     expect(edges).to.eql [
@@ -81,6 +95,9 @@ describe "The `snap`-Function", ->
       [0,3]
     ]
     expect(vertices).to.almost.eql vertices0.slice(0,5)
+
+
+
 
   describe "regressions", ->
     it "removes unused vertexes", ->

@@ -494,6 +494,9 @@ check, we absolutly *must* skip the second check.
 
               if(ccw1*area > 0 and ccw2 * area > 0)
                 #console.log "yep."
+
+                #remember that we are touching our parent.
+                smallerRing.touching=true
                 return j
               #else
                 #console.log "nope"
