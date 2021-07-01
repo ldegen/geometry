@@ -50,7 +50,7 @@ We need the children to be sorted clockwise with respect to the parent
 bone. Check the `./compare-clockwise.litcoffee`-module for the
 details on how to do that.
 
-    compare = require('./compare-clockwise')
+    compare = require('./compare-bones-clockwise')
 
 Here, we just use that module to sort the children on the fly.
 

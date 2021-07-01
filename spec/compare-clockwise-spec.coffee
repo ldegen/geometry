@@ -1,6 +1,6 @@
 describe "Sorting adjacent edges clockwise", ->
-  
-  compare = require('../src/compare-clockwise')
+
+  compare = require('../src/compare-bones-clockwise')
 
   {floor, random, sin, cos} = Math
 

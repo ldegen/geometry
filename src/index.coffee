@@ -12,4 +12,5 @@ C.snap = require "./snap"
 C.cut = require "./cut"
 C.simplify = require "./simplify"
 C.visualize = require "./visualize"
+C.compareClockwise = require "./compare-clockwise"
 module.exports = C

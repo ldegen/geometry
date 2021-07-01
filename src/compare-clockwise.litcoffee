@@ -1,39 +1,24 @@
+This function can be used as a comparator to sort a number of nodes
+adjacent to some given point ``m`` in clockwise order relative to some
+reference point ``p``.
 
-## Ordering bones at a joint in clockwise fashion
+Imagine you are traversing the edges of a planar graph. You arive at ``m``
+("mid point") via some other point ``p`` ("parent"), and you now want to
+visit the other points ("children") connected to ``m`` in clockwise order.
+This HOF answers the question given ``p`` and ``m`` as above, which of two
+given children ``a`` and ``b`` should be visit first. In particular, you
+can use it with something like ``Array.prototype.sort`` to sort an
+array of children.
 
+The implementation works like this:
 
-When calculating the skin for our skeleton, we represent the skeleton
-as a tree of bones. The root of the tree is the start position of the
-turtle. At each joint, there is one parent bone and the remaining bones
-are the children of that bone. For the skinning algorithm to work,
-those children need to be in clockwise order with regard to the parent
-bone.
-
-Thus, we need to define the comparator function relative to the parent 
-bone.
-
-Note that we quietly assume that the endpoint of parent and the
-start points of the children are all the same. The whole comparison
-wouldn't make much sense otherwise.
-
-Note that we also assume that there is no child in the exact
-oposite direction of the parent. The behaviour in this case is
-undefined. Which is no problem in our application.
-
-    elm = (i)->(arr)->arr[i]
-
-    ccw = require("./ccw")
-
-    module.exports = (parent,{startPoint=elm(0),endPoint=elm(1)}={})->(childA,childB)->
-      p = startPoint(parent)
-      m = endPoint(parent) # same as childrens' startPoint
-      a = endPoint(childA)
-      b = endPoint(childB)
-
-Now, imagine a line through the parent bone. Either both children are on
+Imagine a line through the `p` and `m`. Either both children are on
 the same side, or they are on different sides.  If they are on different
 sides, the one on the left side comes first.
 
+    ccw = require("./ccw")
+
+    module.exports = (p,m)->(a,b)->
 
       # positive values indicate counter clockwise movement
       # i.e. left side of parent.
@@ -45,5 +30,5 @@ sides, the one on the left side comes first.
 
 Otherwise, i.e. if both children are on the same side, we need another
 comparison.
-      
+
       else ccw(m,a,b) # negative --> clockwise --> a is left
