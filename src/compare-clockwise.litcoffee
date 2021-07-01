@@ -17,18 +17,24 @@ the same side, or they are on different sides.  If they are on different
 sides, the one on the left side comes first.
 
     ccw = require("./ccw")
+    identity = (x)->x
 
-    module.exports = (p,m)->(a,b)->
+    module.exports = (p,m,vpos=identity)->
+      p=vpos p
+      m=vpos m
+      (a,b)->
 
-      # positive values indicate counter clockwise movement
-      # i.e. left side of parent.
-      ca = ccw(p,m,a)
-      cb = ccw(p,m,b)
+        a = vpos a
+        b = vpos b
+        # positive values indicate counter clockwise movement
+        # i.e. left side of parent.
+        ca = ccw(p,m,a)
+        cb = ccw(p,m,b)
 
-      if ca*cb < 0 # different sign, ergo different sides
-        if ca > 0 or cb < 0 then -1 else 1
+        if ca*cb < 0 # different sign, ergo different sides
+          if ca > 0 or cb < 0 then -1 else 1
 
 Otherwise, i.e. if both children are on the same side, we need another
 comparison.
 
-      else ccw(m,a,b) # negative --> clockwise --> a is left
+        else ccw(m,a,b) # negative --> clockwise --> a is left
