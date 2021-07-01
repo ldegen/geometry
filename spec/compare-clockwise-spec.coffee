@@ -1,3 +1,17 @@
+describe "compareClockwise", ->
+  compare = require('../src/compare-clockwise')
+
+  it "works", ->
+    A=[0,0]
+    C=[30,0]
+    D=[50,-10]
+    E=[40,10]
+
+    cmp = compare A,C
+    expect(cmp(D,E)).to.be.lessThan 0
+    expect(cmp(E,D)).to.be.greaterThan 0
+
+
 describe "Sorting adjacent edges clockwise", ->
 
   compare = require('../src/compare-bones-clockwise')
