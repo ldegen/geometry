@@ -38,7 +38,7 @@ of vertex indices), collapsing identical (or very close) vertices
 on the fly.
 
       planarRings = insertIntersections rings0
-      {vertices, edges:rings1} = snap edges:planarRings
+      {vertices, edges:rings1} = snap radius:options.snapRadius, removeDuplicateEdges: options.snapRemoveDuplicateEdges, edges:planarRings
 
 
       #console.log "vertices:"
@@ -305,7 +305,7 @@ track wether it has been used (processed) before.
           a.ringIndex - b.ringIndex
         else
           b.ringIndex - a.ringIndex
-          
+
 
       for vId, entry of lookup
         edgeTheta = theta vId
@@ -551,13 +551,13 @@ once the area falls under a configured minimum
           #console.log "small ring", i
           break
         #console.log i, outputRing.parent
-        if options.removeRedundantRings and outputRing.parent?
+        if outputRing.parent?
           #console.log "check"
           parentRing = outputRings[outputRing.parent]
           if parentRing.redundant or outputRing.area() * parentRing.area() > 0
             outputRing.redundant = true
             #console.log "redundant ring", i
-            continue
+            continue if options.removeRedundantRings
         group = groups[outputRing.root] ?= []
         group.push outputRing
         visibleRings.push outputRing
@@ -567,7 +567,7 @@ Finally, we convert to GeoJSON, and we are done.
 
 
       if options.debug
-        writeFileSync "/tmp/debug-out.svg", visualize {vertices,rings:visibleRings}
+        writeFileSync "/tmp/debug-#{options.debug}.svg", visualize {vertices,rings:visibleRings}
 
       switch (options.outputFormat ? "FeatureCollection")
         when "FeatureCollection"

@@ -23,7 +23,7 @@ module.exports = ({vertices, rings, redundanceInfo=[], width=210, height=297})->
   #console.log "viewport",viewport
   fitToView = fit bbox, viewport
   #console.log "fitToView", fitToView
-  
+
   scale = vScale fitToView.scale
 
   edgeKey = (a,b)->
@@ -62,14 +62,16 @@ module.exports = ({vertices, rings, redundanceInfo=[], width=210, height=297})->
                 """
 
     """
-    <g class="ring #{if ring.area?()<0 then "cw" else "ccw"} child-of-#{ring.parent} area-#{ring.area?()}" id="ring-#{ringId}">
+    <g class="ring #{if ring.area?()<0 then "cw" else "ccw"}
+      #{if ring.parent? then "child-of-#{ring.parent}" else ""}
+      #area-#{ring.area?()} #{if ring.redundant then "redundant" else ""}" id="ring-#{ringId}">
       <path d="#{outline}" class="background" />
       #{redundantPaths.join "\n"}
     </g>
     """
 
   ringGroups = rings.map ringGroup
-  
+
   vertexLabels = vertices
     .map (coords, vId)->
       [x,y] = scale coords
@@ -97,7 +99,7 @@ module.exports = ({vertices, rings, redundanceInfo=[], width=210, height=297})->
         ]]>
       </style>
     </defs>
-   
+
     <g transform="translate(#{fitToView.translate})">
       #{ringGroups.join("\n")}
       #{vertexLabels.join "\n"}

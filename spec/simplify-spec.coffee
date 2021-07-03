@@ -6,7 +6,7 @@ describe "Polygon Simplifier", ->
       [[-1,-1],[1,1],[1,-1],[-1,1],[-1,-1]]
     ]
     output = simplify input
-    expect(output).to.eql 
+    expect(output).to.eql
       type: "FeatureCollection"
       features: [
         type: "Feature"
@@ -30,7 +30,7 @@ describe "Polygon Simplifier", ->
       [[-1,-1],[1,1],[1,-1],[-1,1],[-1,-1]]
     ]
     output = simplify input, outputFormat: "MultiPolygon"
-    expect(output).to.eql 
+    expect(output).to.eql
       type: "Feature"
       geometry:
         type: "MultiPolygon"
@@ -45,7 +45,7 @@ describe "Polygon Simplifier", ->
         ]
 
   it "can be configured to remove rings that are too small", ->
-    # magnitude of areas should be 1, 4, 16 
+    # magnitude of areas should be 1, 4, 16
     input = [
       [[-0.5,-0.5], [0.5,-0.5], [0.5,0.5],[-0.5, 0.5],[-0.5,-0.5]]
       [[-1,-1], [1,-1],[1,1],[-1,1],[-1,-1]]
@@ -85,7 +85,7 @@ describe "Polygon Simplifier", ->
     expect(output.features[0].geometry.coordinates).to.almost.eql [
             [[-1,-2],[0,-1],[1,-2],[2,-1],[1,0],[2,1],[1,2],[0,1],[-1,2],[-2,1],[-1,0],[-2,-1],[-1,-2]]
     ]
-    expect(output).to.eql 
+    expect(output).to.eql
       type: "FeatureCollection"
       features:[
         type: "Feature"
@@ -95,7 +95,7 @@ describe "Polygon Simplifier", ->
             [[-1,-2],[-0,-1],[1,-2],[2,-1],[1,0],[2,1],[1,2],[-0,1],[-1,2],[-2,1],[-1,0],[-2,-1],[-1,-2]]
           ]
       ]
-  
+
   it "can be configured to ignore redundant edges", ->
     input = [
       [[0,0],[1,0],[1,2],[0,2],[0,0]]
@@ -115,3 +115,23 @@ describe "Polygon Simplifier", ->
             [[0,0],[0,2],[1,2],[1,1],[2,1],[2,2],[3,2],[3,0],[1,0],[0,0]]
           ]
       ]
+
+  describe "regression", ->
+    specify "scenario with overlapping edges", ->
+      input = [
+        [[-3,0],[1,0],[1,4],[-3,0]]
+        [[-1,0],[3,0],[-1,4],[-1,0]]
+      ]
+
+      output = simplify input, debug: "simple"
+      expect(output).to.eql
+        type: "FeatureCollection"
+        features:[
+          type: "Feature"
+          geometry:
+            type: "Polygon"
+            coordinates:[
+              [[ -3, 0 ], [ -1, 0 ],[ 1, 0 ],  [ 3, 0 ], [ 1, 2 ],  [ 1, 4 ], [ -0, 3 ], [ -1, 4 ], [ -1, 2 ], [ -3, 0 ]]
+              [[ -1, 0 ], [ 1, 0 ], [ 1, 2 ], [ -0, 3 ], [ -1, 2 ], [ -1, 0 ]]
+            ]
+        ]
